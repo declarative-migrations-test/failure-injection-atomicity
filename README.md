@@ -1,25 +1,47 @@
 # failure-injection-atomicity
 
-Fault-injection certification for partial DDL failure, residual drift reporting, operator repair, and eventual convergence on both engines.
+    Independent **chaos/fault injection** harness in `declarative-migrations-test` for `declarative-migrations`.
 
-This repository is part of the isolated `declarative-migrations-test` certification fleet. It pins the production implementation as a Git submodule at `declarative-migrations/declarative-postgres-migrate.rs@21eb846e356b2a5aff068b21e77903e6cca50452` and exercises real PostgreSQL and/or CockroachDB instances in GitHub Actions.
+    **Readiness:** `ready`  
+    **Primary dependency strategy:** `matrix`  
+    **Scheduled cadence:** `17 5 * * *` UTC  
+    **Live infrastructure:** PostgreSQL, CockroachDB, fault injector
 
-## Fleet
+    ## Upstream repositories
 
-- `.github`
-- `postgres-forward-rollback`
-- `cockroach-forward-rollback`
-- `cross-engine-compatibility`
-- `concurrent-migrator-lock`
-- `failure-injection-atomicity`
-- `schema-drift-detection`
-- `cli-mcp-contract`
+    - `declarative-migrations/declarative-postgres-migrate.rs`
 
-## Local contract
+    ## Acceptance objectives
 
-```bash
-git submodule update --init --recursive
-scripts/build-dpm.sh
-```
+    1. Verify faults before/during/after DDL, compensation, known-state guarantees, and resumability across the supported happy-path states and canonical fixtures.
+2. Verify faults before/during/after DDL, compensation, known-state guarantees, and resumability under retries, interruption, concurrency, offline operation, or partial failure.
+3. Verify faults before/during/after DDL, compensation, known-state guarantees, and resumability preserves authorization, idempotency, integrity, observability, and actionable failure classification.
 
-Every behavior change must add a regression, preserve exact dependency pinning, avoid credentials in source or logs, and land through a pull request.
+    ## Dependency paths
+
+    This repository tests the upstream through independent installation paths:
+
+    1. `./scripts/bootstrap-upstream.sh git-submodule`
+    2. `./scripts/bootstrap-upstream.sh zed`
+    3. `./scripts/bootstrap-upstream.sh native-package`
+
+    The publisher materializes a real Git submodule when authenticated access is available. Zed and native package coordinates are recorded in `dependency-contract.yaml`; missing unpublished packages are reported as blocked readiness rather than silently skipped.
+
+    ## Check tiers
+
+    ```bash
+    python3 -m pip install -e '.[test]'
+    pytest -q
+    ./scripts/readiness.py --offline
+    ./scripts/run-live.sh
+    ```
+
+    Pull requests validate the harness and deterministic contract fixtures. Secret-, service-, emulator-, desktop-, database-, provider-, chaos-, scale-, and soak-dependent checks run by schedule or manual dispatch.
+
+    A live result must be classified as one of:
+
+    - **product regression** — a behavioral invariant fails after dependencies are ready;
+    - **blocked dependency** — an upstream, credential, package, emulator, provider sandbox, or deployment is unavailable;
+    - **harness regression** — generated metadata, fixtures, workflow, or runner setup is invalid.
+
+    Managed by `github-test-org-factory/1.0.0`.
