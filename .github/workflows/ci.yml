@@ -1,0 +1,85 @@
+name: Failed-step atomicity and recovery
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "11 7 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  recovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+        with:
+          workspaces: vendor/dpm -> target
+      - name: Install PostgreSQL client
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+      - name: Validate repository contract
+        run: python3 scripts/verify-repository.py
+      - name: Start CockroachDB 25.2.4
+        run: >-
+          docker run --detach --name dm-cockroach
+          --publish 26257:26257 --publish 8080:8080
+          cockroachdb/cockroach:v25.2.4 start-single-node --insecure
+      - name: Wait for CockroachDB
+        shell: bash
+        run: |
+          for _ in {1..60}; do
+            if docker exec dm-cockroach cockroach sql --insecure --host=localhost:26257 --execute='SELECT 1' >/dev/null 2>&1; then exit 0; fi
+            sleep 2
+          done
+          docker logs dm-cockroach
+          exit 1
+      - name: Build pinned production dpm
+        id: dpm
+        shell: bash
+        run: echo "path=$(scripts/build-dpm.sh)" >> "$GITHUB_OUTPUT"
+      - name: Inject late failure and prove recovery
+        env:
+          DPM_BIN: ${{ steps.dpm.outputs.path }}
+          POSTGRES_ADMIN_URL: postgres://postgres@localhost:5432/postgres
+          COCKROACH_ADMIN_URL: postgresql://root@localhost:26257/defaultdb?sslmode=disable
+        run: scripts/test-failed-step.sh
+      - name: Upload failure and residual evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: failed-step-evidence
+          path: artifacts
+          retention-days: 7
+          if-no-files-found: error
+      - name: CockroachDB logs on failure
+        if: failure()
+        run: docker logs dm-cockroach
+      - name: Stop CockroachDB
+        if: always()
+        run: docker rm -f dm-cockroach >/dev/null 2>&1 || true
