@@ -1,3 +1,7 @@
-vendor/
+.env
+.env.*
+!.env.example
+target/
 artifacts/
 *.log
+__pycache__/

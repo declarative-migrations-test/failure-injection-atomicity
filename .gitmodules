@@ -1,0 +1,4 @@
+[submodule "vendor/declarative-postgres-migrate.rs"]
+	path = vendor/declarative-postgres-migrate.rs
+	url = https://github.com/declarative-migrations/declarative-postgres-migrate.rs.git
+	branch = main
