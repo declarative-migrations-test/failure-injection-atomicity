@@ -1,0 +1,30 @@
+schema_version: 1
+readiness: ready
+primary_upstream: declarative-migrations/declarative-postgres-migrate.rs
+upstream_repositories:
+- declarative-migrations/declarative-postgres-migrate.rs
+planned_upstream_repositories: []
+primary_strategy: matrix
+supported_modes:
+- git-submodule
+- zed
+- native-package
+git:
+  url: https://github.com/declarative-migrations/declarative-postgres-migrate.rs.git
+  path: vendor/upstream/declarative-postgres-migrate.rs
+  materialize_during_provisioning: true
+  owner: declarative-migrations
+zed:
+  package: null
+  manifest: .zpkg.toml
+  install_dir: .vendor/.zed
+  discover_from_upstream_manifest: true
+native:
+  language: null
+  package: null
+  consumer_directory: consumer
+github_actions_private_upstream_auth:
+  app_id_variable: CROSS_ORG_APP_ID
+  private_key_secret: CROSS_ORG_APP_PRIVATE_KEY
+  installation_token_action: actions/create-github-app-token@v2
+  additional_owners: []
