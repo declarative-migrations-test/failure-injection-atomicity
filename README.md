@@ -18,7 +18,7 @@ Source organization: `declarative-migrations`
 
 | Source | Commit | Branch observed |
 |---|---:|---|
-| `declarative-migrations/declarative-postgres-migrate.rs` | `21eb846e356b2a5aff068b21e77903e6cca50452` | `main` |
+| `declarative-migrations/declarative-postgres-migrate.rs` | `c1e0d15c08d55d52909b6eb2b2d5290529ce0114` | `main` |
 
 ## Dependency lanes
 
