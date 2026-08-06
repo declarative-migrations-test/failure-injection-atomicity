@@ -5,3 +5,7 @@ target/
 artifacts/
 *.log
 __pycache__/
+tmp
+temp
+tmp/worktrees
+temp/worktrees
