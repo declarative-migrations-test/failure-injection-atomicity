@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "upstream": "declarative-migrations/declarative-postgres-migrate.rs",
+  "url": "https://github.com/declarative-migrations/declarative-postgres-migrate.rs.git",
+  "path": "vendor/upstream/declarative-postgres-migrate.rs",
+  "commit": "21eb846e356b2a5aff068b21e77903e6cca50452"
+}
