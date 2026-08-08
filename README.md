@@ -1,6 +1,6 @@
 # failure-injection-atomicity
 
-Fault-injection certification for transactional DDL rollback, residual drift reporting, operator repair, and eventual convergence.
+Fault-injection certification for engine-specific DDL failure semantics, residual drift reporting, operator repair, and eventual convergence.
 
 This repository is part of the isolated `declarative-migrations-test` certification fleet. It pins the production implementation as a Git submodule at `declarative-migrations/declarative-postgres-migrate.rs@d05a7880987ddaa271fa88b52c787390ef12b899` and exercises real database engines in GitHub Actions.
 
@@ -8,13 +8,15 @@ This repository is part of the isolated `declarative-migrations-test` certificat
 
 The generic PostgreSQL/CockroachDB lane deploys a baseline table, seeds duplicate values, and attempts a candidate that creates an audit table before adding a conflicting unique constraint. It requires:
 
-- a bounded, non-crashing migration failure;
-- rollback of the earlier audit-table DDL;
+- a bounded, non-crashing uniqueness failure;
 - preservation of the existing user rows;
-- a residual plan containing both rolled-back changes;
+- absence of the rejected uniqueness constraint;
+- PostgreSQL to roll the earlier audit-table DDL back with the failed transaction;
+- CockroachDB to report its online schema-change behavior explicitly by retaining the earlier audit table while leaving the later constraint and foreign key unfinished;
+- an engine-accurate residual plan;
 - successful data repair, reapply, zero-diff convergence, and verification on both engines.
 
-This replaces the obsolete assumption that a failed DDL transaction should leave the earlier table creation behind.
+The test therefore does not pretend PostgreSQL and CockroachDB have identical DDL failure semantics. It requires each supported engine's observed state to be explicit, bounded, and recoverable.
 
 ## Canonical quote atomicity lane
 
@@ -27,7 +29,7 @@ On PostgreSQL 17 and 18 it:
 - derives a faulty candidate that first adds a non-null probe column and then attempts a unique index rejected by the duplicate existing values;
 - verifies the generated plan orders the additive column before the failing index;
 - requires a non-crashing, diagnostic failure;
-- proves the probe column and index are both absent afterward, demonstrating transaction rollback;
+- proves the probe column and index are both absent afterward, demonstrating PostgreSQL transaction rollback;
 - proves the original quote rows, forced RLS, policies, role boundaries, and owner isolation remain intact;
 - immediately reapplies and verifies the production schema to prove lock release and deterministic recovery.
 

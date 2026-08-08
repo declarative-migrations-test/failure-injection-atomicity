@@ -89,11 +89,28 @@ SQL
     exit 1
   fi
 
-  # The candidate creates audit_log before adding users_handle_key. A failed
-  # transaction must roll the earlier DDL back while preserving preexisting rows.
-  test "$(scalar "$target" "SELECT count(*) FROM app.users")" = "2"
-  test "$(scalar "$target" "SELECT count(*) FROM information_schema.tables WHERE table_schema='app' AND table_name='audit_log'")" = "0"
-  test "$(scalar "$target" "SELECT count(*) FROM information_schema.table_constraints WHERE table_schema='app' AND table_name='users' AND constraint_name='users_handle_key'")" = "0"
+  local users_after_failure audit_after_failure unique_after_failure
+  users_after_failure="$(scalar "$target" "SELECT count(*) FROM app.users")"
+  audit_after_failure="$(scalar "$target" "SELECT count(*) FROM information_schema.tables WHERE table_schema='app' AND table_name='audit_log'")"
+  unique_after_failure="$(scalar "$target" "SELECT count(*) FROM information_schema.table_constraints WHERE table_schema='app' AND table_name='users' AND constraint_name='users_handle_key'")"
+  test "$users_after_failure" = "2"
+  test "$unique_after_failure" = "0"
+
+  # PostgreSQL rolls the full failed DDL transaction back. CockroachDB's online
+  # schema-change machinery preserves the earlier table creation while rejecting
+  # the later uniqueness backfill. Both outcomes must be explicit and recoverable.
+  case "$engine" in
+    postgres)
+      test "$audit_after_failure" = "0"
+      ;;
+    cockroach)
+      test "$audit_after_failure" = "1"
+      ;;
+    *)
+      echo "unsupported engine: $engine" >&2
+      exit 1
+      ;;
+  esac
 
   set +e
   "$DPM" diff \
@@ -109,13 +126,29 @@ SQL
     echo "$engine residual diff expected exit 2, observed $residual_status" >&2
     exit 1
   fi
-  if ! grep -Eqi 'audit_log' "${prefix}-residual.sql" "${prefix}-residual.err"; then
-    echo "$engine residual diff omitted rolled-back audit_log" >&2
+  if ! grep -Eqi 'users_handle_key|unique.*handle' \
+    "${prefix}-residual.sql" "${prefix}-residual.err"; then
+    echo "$engine residual diff omitted the unresolved uniqueness work" >&2
     exit 1
   fi
-  if ! grep -Eqi 'users_handle_key|unique.*handle' "${prefix}-residual.sql" "${prefix}-residual.err"; then
-    echo "$engine residual diff omitted rolled-back uniqueness work" >&2
-    exit 1
+
+  if [[ "$engine" == "postgres" ]]; then
+    if ! grep -Fqi -- '-- create table: app.audit_log' \
+      "${prefix}-residual.sql" "${prefix}-residual.err"; then
+      echo "PostgreSQL residual diff omitted the rolled-back audit_log table" >&2
+      exit 1
+    fi
+  else
+    if grep -Fqi -- '-- create table: app.audit_log' \
+      "${prefix}-residual.sql" "${prefix}-residual.err"; then
+      echo "CockroachDB residual diff tried to recreate the preserved audit_log table" >&2
+      exit 1
+    fi
+    if ! grep -Eqi 'audit_log_user_id_fkey|foreign key.*audit_log' \
+      "${prefix}-residual.sql" "${prefix}-residual.err"; then
+      echo "CockroachDB residual diff omitted the unfinished audit_log foreign key" >&2
+      exit 1
+    fi
   fi
 
   psql "$target" -v ON_ERROR_STOP=1 \
@@ -147,8 +180,9 @@ SQL
   printf '%s\n' \
     "engine=${engine}" \
     "failed_apply_status=${status}" \
-    "rolled_back_audit_log=true" \
-    "preserved_users=2" \
+    "users_preserved=${users_after_failure}" \
+    "audit_log_after_failure=${audit_after_failure}" \
+    "unique_constraint_after_failure=${unique_after_failure}" \
     "recovery_converged=true" \
     >"${prefix}-summary.txt"
 
@@ -171,4 +205,4 @@ certify \
   'psql "$CR_ADMIN" -v ON_ERROR_STOP=1 -c "CREATE DATABASE dm_failure_cr"' \
   'psql "$CR_ADMIN" -v ON_ERROR_STOP=1 -c "DROP DATABASE IF EXISTS dm_failure_cr CASCADE"'
 
-echo "Failure-injection transactional rollback and recovery certification passed"
+echo "Failure-injection engine-specific rollback and recovery certification passed"
