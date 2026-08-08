@@ -1,0 +1,121 @@
+name: Canonical quote migration atomicity
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: canonical-quote-atomicity-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  certify:
+    name: PostgreSQL ${{ matrix.postgres }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        postgres: ['17', '18']
+    services:
+      postgres:
+        image: "postgres:${{ matrix.postgres }}"
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: quote-atomicity
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - name: Check out atomicity harness
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Check out exact Canonical quote source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          repository: canonical-cloud/canonical-api-server.rs
+          ref: 26967bed96b1b48ea846c3fd418018ea40f4b9e1
+          path: canonical-api
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Verify immutable source, namespace, and migration pins
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/verify-repository.py
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import subprocess
+          from pathlib import Path
+
+          contract = json.loads(Path('canonical-quote-source.json').read_text())
+          source = Path('canonical-api')
+          observed = subprocess.check_output(
+              ['git', '-C', str(source), 'rev-parse', 'HEAD'], text=True
+          ).strip()
+          assert observed == contract['sourceCommit']
+          assert hashlib.sha256(
+              (source / 'db/schema.sql').read_bytes()
+          ).hexdigest() == contract['schemaSha256']
+          namespace = json.loads((source / 'db/namespace.json').read_text())
+          assert namespace['namespaceId'] == 'canonical_cloud__quote'
+          assert namespace['database']['minimumMajorVersion'] == 17
+          assert namespace['declarativeMigration']['source'] == 'db/schema.sql'
+          assert namespace['declarativeMigration']['bootstrap'] == 'db/bootstrap.sql'
+          assert namespace['declarativeMigration']['grants'] == 'db/grants.sql'
+          assert namespace['declarativeMigration']['revision'] == contract['dpmCommit']
+          assert namespace['declarativeMigration']['sourceSha256'] == contract['schemaSha256']
+          PY
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30
+        with:
+          toolchain: "1.95.0"
+
+      - name: Cache pinned dpm build
+        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+        with:
+          workspaces: vendor/declarative-postgres-migrate.rs -> target
+          key: canonical-quote-atomicity-pg${{ matrix.postgres }}
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+      - name: Build pinned dpm
+        id: dpm
+        shell: bash
+        run: echo "path=$(scripts/build-dpm.sh)" >> "$GITHUB_OUTPUT"
+
+      - name: Inject a late Canonical DDL failure and prove rollback
+        env:
+          CANONICAL_API_DIR: ${{ github.workspace }}/canonical-api
+          DPM_BIN: ${{ steps.dpm.outputs.path }}
+          POSTGRES_ADMIN_URL: postgres://postgres:quote-atomicity@localhost:5432/postgres
+          POSTGRES_MAJOR: ${{ matrix.postgres }}
+          TEST_ROLE_PASSWORD: quote-atomicity
+        run: bash scripts/test-canonical-quote-atomicity.sh
+
+      - name: Upload bounded failure and recovery evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: canonical-quote-atomicity-pg${{ matrix.postgres }}
+          path: artifacts/canonical-quote-atomicity/pg${{ matrix.postgres }}
+          retention-days: 14
+          if-no-files-found: error
