@@ -1,8 +1,20 @@
 # failure-injection-atomicity
 
-Fault-injection certification for partial DDL failure, residual drift reporting, operator repair, and eventual convergence.
+Fault-injection certification for transactional DDL rollback, residual drift reporting, operator repair, and eventual convergence.
 
 This repository is part of the isolated `declarative-migrations-test` certification fleet. It pins the production implementation as a Git submodule at `declarative-migrations/declarative-postgres-migrate.rs@d05a7880987ddaa271fa88b52c787390ef12b899` and exercises real database engines in GitHub Actions.
+
+## Generic cross-engine lane
+
+The generic PostgreSQL/CockroachDB lane deploys a baseline table, seeds duplicate values, and attempts a candidate that creates an audit table before adding a conflicting unique constraint. It requires:
+
+- a bounded, non-crashing migration failure;
+- rollback of the earlier audit-table DDL;
+- preservation of the existing user rows;
+- a residual plan containing both rolled-back changes;
+- successful data repair, reapply, zero-diff convergence, and verification on both engines.
+
+This replaces the obsolete assumption that a failed DDL transaction should leave the earlier table creation behind.
 
 ## Canonical quote atomicity lane
 
