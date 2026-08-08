@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourceRepository": "canonical-cloud/canonical-api-server.rs",
-  "sourceCommit": "5bf98beb59ec9337cdc45c9b06778e5889dba939",
+  "sourceCommit": "1bbdeec25cac0df54a337d0985381e0575e4b9d5",
   "schemaPath": "db/schema.sql",
   "schemaSha256": "712f1269da3c8dfd381af9c69a81e549a4eb52be3e4f49558ec1a5edf205e191",
   "bootstrapPath": "db/bootstrap.sql",
