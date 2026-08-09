@@ -19,6 +19,7 @@ required = [
     "production-dependency.json",
     "canonical-quote-source.json",
     "scripts/build-dpm.sh",
+    "scripts/fetch-exact-public-source.sh",
     "scripts/test-failure-injection.sh",
     "scripts/test-failed-step.sh",
     "scripts/test-canonical-quote-atomicity.sh",
@@ -108,10 +109,22 @@ if observed_gitlink != expected_dpm:
         f"observed {observed_gitlink}"
     )
 
+fetch_helper = (root / "scripts/fetch-exact-public-source.sh").read_text()
+for required_text in (
+    'https://github.com/${repository}.git',
+    'fetch --quiet --no-tags --depth=1 origin "$commit"',
+    'checkout --quiet --detach FETCH_HEAD',
+    'rev-parse HEAD',
+    'remote remove origin',
+):
+    if required_text not in fetch_helper:
+        raise SystemExit(f"exact-source helper omits {required_text}")
+
 workflow = (root / ".github/workflows/canonical-quote.yml").read_text()
 for required_text in (
-    f"repository: {source['sourceRepository']}",
-    f"ref: {source['sourceCommit']}",
+    "scripts/fetch-exact-public-source.sh",
+    source["sourceRepository"],
+    source["sourceCommit"],
     "postgres: ['17', '18']",
     "toolchain: \"1.95.0\"",
     "persist-credentials: false",
@@ -122,6 +135,8 @@ for required_text in (
 ):
     if required_text not in workflow:
         raise SystemExit(f"Canonical workflow omits {required_text}")
+if f"repository: {source['sourceRepository']}" in workflow:
+    raise SystemExit("Canonical workflow must not require cross-organization checkout credentials")
 
 base_workflow = (root / ".github/workflows/ci.yml").read_text()
 if 'toolchain: "1.95.0"' not in base_workflow:
