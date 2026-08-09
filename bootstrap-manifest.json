@@ -3,7 +3,7 @@
   "description": "Fault-injection certification for partial DDL failure, residual drift reporting, operator repair, and eventual convergence on both engines.",
   "organization": "declarative-migrations-test",
   "production_dependency": {
-    "commit": "21eb846e356b2a5aff068b21e77903e6cca50452",
+    "commit": "d05a7880987ddaa271fa88b52c787390ef12b899",
     "path": "vendor/declarative-postgres-migrate.rs",
     "repository": "declarative-migrations/declarative-postgres-migrate.rs",
     "transport": "git-submodule"

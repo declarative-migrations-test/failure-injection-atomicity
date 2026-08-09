@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "sourceRepository": "canonical-cloud/canonical-api-server.rs",
+  "sourceCommit": "7987c05944df5c03ff2fcbeeedf2c8e79f973d75",
+  "schemaPath": "db/schema.sql",
+  "schemaSha256": "712f1269da3c8dfd381af9c69a81e549a4eb52be3e4f49558ec1a5edf205e191",
+  "bootstrapPath": "db/bootstrap.sql",
+  "grantsPath": "db/grants.sql",
+  "namespacePath": "db/namespace.json",
+  "dpmRepository": "declarative-migrations/declarative-postgres-migrate.rs",
+  "dpmCommit": "d05a7880987ddaa271fa88b52c787390ef12b899",
+  "minimumPostgresMajor": 17
+}

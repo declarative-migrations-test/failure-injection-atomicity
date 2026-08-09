@@ -1,8 +1,39 @@
 # failure-injection-atomicity
 
-Fault-injection certification for partial DDL failure, residual drift reporting, operator repair, and eventual convergence on both engines.
+Fault-injection certification for engine-specific DDL failure semantics, residual drift reporting, operator repair, and eventual convergence.
 
-This repository is part of the isolated `declarative-migrations-test` certification fleet. It pins the production implementation as a Git submodule at `declarative-migrations/declarative-postgres-migrate.rs@21eb846e356b2a5aff068b21e77903e6cca50452` and exercises real PostgreSQL and/or CockroachDB instances in GitHub Actions.
+This repository is part of the isolated `declarative-migrations-test` certification fleet. It pins the production implementation as a Git submodule at `declarative-migrations/declarative-postgres-migrate.rs@d05a7880987ddaa271fa88b52c787390ef12b899` and exercises real database engines in GitHub Actions.
+
+## Generic cross-engine lane
+
+The generic PostgreSQL/CockroachDB lane deploys a baseline table, seeds duplicate values, and attempts a candidate that creates an audit table before adding a conflicting unique constraint. It requires:
+
+- a bounded, non-crashing uniqueness failure;
+- preservation of the existing user rows;
+- absence of the rejected uniqueness constraint;
+- PostgreSQL to roll the earlier audit-table DDL back with the failed transaction;
+- CockroachDB to report its online schema-change behavior explicitly by retaining the earlier audit table while leaving the later constraint and foreign key unfinished;
+- an engine-accurate residual plan;
+- successful data repair, reapply, zero-diff convergence, and verification on both engines.
+
+The test therefore does not pretend PostgreSQL and CockroachDB have identical DDL failure semantics. It requires each supported engine's observed state to be explicit, bounded, and recoverable.
+
+## Canonical quote atomicity lane
+
+The Canonical lane checks out verified merge `canonical-cloud/canonical-api-server.rs@26967bed96b1b48ea846c3fd418018ea40f4b9e1` and verifies its exact schema digest, dedicated `canonical_cloud__quote` namespace, bootstrap/grants paths, PostgreSQL minimum, and DPM revision.
+
+On PostgreSQL 17 and 18 it:
+
+- deploys the reviewed schema with the dedicated migrator role and applies least-privilege grants;
+- seeds two synthetic owner-scoped quote rows;
+- derives a faulty candidate that first adds a non-null probe column and then attempts a unique index rejected by the duplicate existing values;
+- verifies the generated plan orders the additive column before the failing index;
+- requires a non-crashing, diagnostic failure;
+- proves the probe column and index are both absent afterward, demonstrating PostgreSQL transaction rollback;
+- proves the original quote rows, forced RLS, policies, role boundaries, and owner isolation remain intact;
+- immediately reapplies and verifies the production schema to prove lock release and deterministic recovery.
+
+No production database, Cloudflare, R2, Supabase, Kubernetes, or Gemini credential is available to this repository.
 
 ## Fleet
 
