@@ -1,0 +1,153 @@
+{
+  "schemaVersion": "declarative-migrations.crash-evidence.v1",
+  "cases": [
+    {
+      "scenarioId": "crash-before-transaction",
+      "faultPoint": "before_transaction",
+      "fixture": {
+        "databaseIdentity": "fixture:den-3430:before-transaction",
+        "engine": "postgresql",
+        "engineVersion": "17",
+        "ephemeral": true,
+        "syntheticData": true
+      },
+      "source": {
+        "migrationTreeSha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "testSourceSha": "abcdef0123456789abcdef0123456789abcdef01"
+      },
+      "observation": {
+        "knownState": true,
+        "schemaState": "unchanged",
+        "bookkeepingState": "absent",
+        "authoritativeAppliedRecords": 0,
+        "leaseOwnerPresent": false,
+        "readiness": "blocked_until_retry"
+      },
+      "outcome": "recovered",
+      "recoveryAction": "retry_exact_plan",
+      "diagnostics": {
+        "redacted": true,
+        "categories": [
+          "fault_point",
+          "transaction_state",
+          "bookkeeping_state",
+          "lock_state",
+          "readiness_state",
+          "recovery_result"
+        ]
+      },
+      "externalSideEffects": false
+    },
+    {
+      "scenarioId": "crash-during-transactional-ddl",
+      "faultPoint": "during_transactional_ddl",
+      "fixture": {
+        "databaseIdentity": "fixture:den-3430:during-transactional-ddl",
+        "engine": "postgresql",
+        "engineVersion": "17",
+        "ephemeral": true,
+        "syntheticData": true
+      },
+      "source": {
+        "migrationTreeSha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "testSourceSha": "abcdef0123456789abcdef0123456789abcdef01"
+      },
+      "observation": {
+        "knownState": true,
+        "schemaState": "rolled_back",
+        "bookkeepingState": "absent",
+        "authoritativeAppliedRecords": 0,
+        "leaseOwnerPresent": false,
+        "readiness": "blocked_until_retry"
+      },
+      "outcome": "recovered",
+      "recoveryAction": "retry_exact_plan",
+      "diagnostics": {
+        "redacted": true,
+        "categories": [
+          "fault_point",
+          "transaction_state",
+          "bookkeeping_state",
+          "lock_state",
+          "readiness_state",
+          "recovery_result"
+        ]
+      },
+      "externalSideEffects": false
+    },
+    {
+      "scenarioId": "crash-after-ddl-before-bookkeeping",
+      "faultPoint": "after_ddl_before_bookkeeping",
+      "fixture": {
+        "databaseIdentity": "fixture:den-3430:after-ddl-before-bookkeeping",
+        "engine": "postgresql",
+        "engineVersion": "17",
+        "ephemeral": true,
+        "syntheticData": true
+      },
+      "source": {
+        "migrationTreeSha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "testSourceSha": "abcdef0123456789abcdef0123456789abcdef01"
+      },
+      "observation": {
+        "knownState": true,
+        "schemaState": "rolled_back",
+        "bookkeepingState": "absent",
+        "authoritativeAppliedRecords": 0,
+        "leaseOwnerPresent": false,
+        "readiness": "blocked_until_retry"
+      },
+      "outcome": "recovered",
+      "recoveryAction": "retry_exact_plan",
+      "diagnostics": {
+        "redacted": true,
+        "categories": [
+          "fault_point",
+          "transaction_state",
+          "bookkeeping_state",
+          "lock_state",
+          "readiness_state",
+          "recovery_result"
+        ]
+      },
+      "externalSideEffects": false
+    },
+    {
+      "scenarioId": "crash-after-bookkeeping-before-exit",
+      "faultPoint": "after_bookkeeping_before_exit",
+      "fixture": {
+        "databaseIdentity": "fixture:den-3430:after-bookkeeping-before-exit",
+        "engine": "postgresql",
+        "engineVersion": "17",
+        "ephemeral": true,
+        "syntheticData": true
+      },
+      "source": {
+        "migrationTreeSha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "testSourceSha": "abcdef0123456789abcdef0123456789abcdef01"
+      },
+      "observation": {
+        "knownState": true,
+        "schemaState": "applied",
+        "bookkeepingState": "present",
+        "authoritativeAppliedRecords": 1,
+        "leaseOwnerPresent": false,
+        "readiness": "ready"
+      },
+      "outcome": "converged",
+      "recoveryAction": "none",
+      "diagnostics": {
+        "redacted": true,
+        "categories": [
+          "fault_point",
+          "transaction_state",
+          "bookkeeping_state",
+          "lock_state",
+          "readiness_state",
+          "recovery_result"
+        ]
+      },
+      "externalSideEffects": false
+    }
+  ]
+}
