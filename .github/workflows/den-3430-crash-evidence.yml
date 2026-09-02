@@ -1,0 +1,35 @@
+name: DEN-3430 crash evidence contract
+
+on:
+  pull_request:
+    paths:
+      - 'evidence/crash-evidence.schema.json'
+      - 'evidence/crash-matrix.json'
+      - 'scripts/test-crash-evidence-contract.py'
+      - '.github/workflows/den-3430-crash-evidence.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'evidence/crash-evidence.schema.json'
+      - 'evidence/crash-matrix.json'
+      - 'scripts/test-crash-evidence-contract.py'
+      - '.github/workflows/den-3430-crash-evidence.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: den-3430-crash-evidence-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact candidate
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate fixture-scoped crash evidence
+        run: python3 scripts/test-crash-evidence-contract.py
