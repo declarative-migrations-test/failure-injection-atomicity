@@ -1,5 +1,5 @@
 {
   "repository": "declarative-migrations/declarative-postgres-migrate.rs",
-  "commit": "21eb846e356b2a5aff068b21e77903e6cca50452",
-  "transport": "pinned git checkout"
+  "commit": "d05a7880987ddaa271fa88b52c787390ef12b899",
+  "transport": "pinned git submodule"
 }

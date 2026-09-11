@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/declarative-migrations-test/failure-injection-atomicity/evidence/crash-evidence.schema.json",
+  "title": "Declarative migration crash evidence matrix",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "cases"],
+  "properties": {
+    "schemaVersion": {
+      "const": "declarative-migrations.crash-evidence.v1"
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "scenarioId",
+          "faultPoint",
+          "fixture",
+          "source",
+          "observation",
+          "outcome",
+          "recoveryAction",
+          "diagnostics",
+          "externalSideEffects"
+        ],
+        "properties": {
+          "scenarioId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{2,63}$"
+          },
+          "faultPoint": {
+            "enum": [
+              "before_transaction",
+              "during_transactional_ddl",
+              "after_ddl_before_bookkeeping",
+              "after_bookkeeping_before_exit"
+            ]
+          },
+          "fixture": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "databaseIdentity",
+              "engine",
+              "engineVersion",
+              "ephemeral",
+              "syntheticData"
+            ],
+            "properties": {
+              "databaseIdentity": {
+                "type": "string",
+                "pattern": "^fixture:[a-z0-9][a-z0-9:-]{2,127}$"
+              },
+              "engine": {
+                "enum": ["postgresql", "cockroachdb"]
+              },
+              "engineVersion": {
+                "type": "string",
+                "pattern": "^[0-9]+(?:\\.[0-9]+){0,2}$"
+              },
+              "ephemeral": {"const": true},
+              "syntheticData": {"const": true}
+            }
+          },
+          "source": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["migrationTreeSha256", "testSourceSha"],
+            "properties": {
+              "migrationTreeSha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "testSourceSha": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}$"
+              }
+            }
+          },
+          "observation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "knownState",
+              "schemaState",
+              "bookkeepingState",
+              "authoritativeAppliedRecords",
+              "leaseOwnerPresent",
+              "readiness"
+            ],
+            "properties": {
+              "knownState": {"const": true},
+              "schemaState": {
+                "enum": ["unchanged", "rolled_back", "applied", "residual_reported"]
+              },
+              "bookkeepingState": {
+                "enum": ["absent", "present"]
+              },
+              "authoritativeAppliedRecords": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "leaseOwnerPresent": {"type": "boolean"},
+              "readiness": {
+                "enum": ["ready", "blocked_until_retry", "blocked_for_operator"]
+              }
+            }
+          },
+          "outcome": {
+            "enum": ["safe_refusal", "recovered", "converged"]
+          },
+          "recoveryAction": {
+            "enum": [
+              "none",
+              "retry_exact_plan",
+              "operator_review_required"
+            ]
+          },
+          "diagnostics": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["redacted", "categories"],
+            "properties": {
+              "redacted": {"const": true},
+              "categories": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "fault_point",
+                    "transaction_state",
+                    "bookkeeping_state",
+                    "lock_state",
+                    "readiness_state",
+                    "recovery_result"
+                  ]
+                }
+              }
+            }
+          },
+          "externalSideEffects": {"const": false}
+        }
+      }
+    }
+  }
+}
