@@ -9,6 +9,7 @@ manifest = json.loads((root / "bootstrap-manifest.json").read_text())
 dependency = json.loads((root / "production-dependency.json").read_text())
 source = json.loads((root / "canonical-quote-source.json").read_text())
 expected_dpm = "341dad272543eb1cce6d148106f53a1672ff15bb"
+canonical_consumer_dpm = "d05a7880987ddaa271fa88b52c787390ef12b899"
 
 required = [
     "README.md",
@@ -79,8 +80,11 @@ if source["namespacePath"] != "db/namespace.json":
     raise SystemExit("Canonical namespace path drifted")
 if source["dpmRepository"] != production["repository"]:
     raise SystemExit("Canonical DPM repository drifted")
-if source["dpmCommit"] != expected_dpm:
-    raise SystemExit("Canonical DPM revision drifted")
+# The Canonical quote source intentionally records the older migration-tool
+# revision it was reviewed with.  This suite runs that unchanged consumer
+# contract through the current DPM candidate to prove release compatibility.
+if source["dpmCommit"] != canonical_consumer_dpm:
+    raise SystemExit("Canonical consumer DPM revision drifted")
 if source["minimumPostgresMajor"] != 17:
     raise SystemExit("Canonical minimum PostgreSQL major drifted")
 
@@ -157,5 +161,6 @@ for path in tracked_files:
 
 print(
     f"validated {manifest['organization']}/{manifest['repository']} with "
-    f"Canonical source {source['sourceCommit']} and DPM {expected_dpm}"
+    f"Canonical source {source['sourceCommit']}, consumer DPM {source['dpmCommit']}, "
+    f"and candidate DPM {expected_dpm}"
 )
