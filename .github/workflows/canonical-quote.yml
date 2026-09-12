@@ -96,10 +96,14 @@ jobs:
       - name: Install PostgreSQL client
         run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
 
-      - name: Build pinned dpm
+      - name: Build current dpm candidate
         id: dpm
         shell: bash
-        run: echo "path=$(scripts/build-dpm.sh)" >> "$GITHUB_OUTPUT"
+        run: |
+          set -euo pipefail
+          dpm_path="$(scripts/build-dpm.sh)"
+          test -x "$dpm_path"
+          printf 'path=%s\n' "$dpm_path" >> "$GITHUB_OUTPUT"
 
       - name: Inject a late Canonical DDL failure and prove rollback
         env:
