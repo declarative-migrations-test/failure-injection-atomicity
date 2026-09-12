@@ -8,7 +8,7 @@ root = Path(__file__).resolve().parents[1]
 manifest = json.loads((root / "bootstrap-manifest.json").read_text())
 dependency = json.loads((root / "production-dependency.json").read_text())
 source = json.loads((root / "canonical-quote-source.json").read_text())
-expected_dpm = "d05a7880987ddaa271fa88b52c787390ef12b899"
+expected_dpm = "341dad272543eb1cce6d148106f53a1672ff15bb"
 
 required = [
     "README.md",
