@@ -8,6 +8,6 @@
   "grantsPath": "db/grants.sql",
   "namespacePath": "db/namespace.json",
   "dpmRepository": "declarative-migrations/declarative-postgres-migrate.rs",
-  "dpmCommit": "341dad272543eb1cce6d148106f53a1672ff15bb",
+  "dpmCommit": "d05a7880987ddaa271fa88b52c787390ef12b899",
   "minimumPostgresMajor": 17
 }
