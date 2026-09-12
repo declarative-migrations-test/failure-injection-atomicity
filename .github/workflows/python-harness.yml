@@ -1,0 +1,53 @@
+name: Python harness installation
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: python-harness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install-and-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Verify exact source
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install the same harness used by live acceptance
+        run: python -m pip install -e '.[test]'
+      - name: Run credential-free harness regressions
+        run: python -m pytest
+      - name: Build dependency-only wheel
+        run: python -m pip wheel --no-deps --wheel-dir tmp/wheels .
+      - name: Reject unintended source or fixture packaging
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          wheels = list(Path('tmp/wheels').glob('*.whl'))
+          assert len(wheels) == 1, 'expected one harness wheel'
+          with ZipFile(wheels[0]) as wheel:
+              names = wheel.namelist()
+              assert names, 'empty wheel'
+              assert all('.dist-info/' in name for name in names), names
+          PY

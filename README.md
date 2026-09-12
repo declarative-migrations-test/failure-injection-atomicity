@@ -57,6 +57,14 @@ Every behavior change must add a regression, preserve exact dependency pinning, 
 
 ## Test-org harness metadata
 
+The retained Python harness runs its scripts directly from this checkout.
+Its installable wheel contains dependency metadata only: vendor checkouts,
+SQL fixtures, evidence, and temporary directories are not Python packages.
+The current generator in `zed-pkg-test/zed-pkg-e2e` emits the Node plan and
+workflow scaffold; it no longer emits `pyproject.toml` or the retained Python
+scripts. Repository-owned Python installation is verified independently on
+Python 3.11 and 3.12 before the live acceptance workflow can rely on it.
+
 Recorded by the `zed-pkg-test/test-org-fleet` bootstrapper (the generated harness under `scripts/`, `tests/` and `pyproject.toml`); the certification lane above remains the source of truth.
 
 - **Readiness:** `ready`
