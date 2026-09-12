@@ -1,0 +1,6 @@
+services:
+  toxiproxy:
+    image: ${TOXIPROXY_IMAGE:-ghcr.io/shopify/toxiproxy:2.9.0}
+    ports:
+    - 8474:8474
+    - 8666:8666

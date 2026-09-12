@@ -1,0 +1,52 @@
+schema_version: 1
+managed_by: github-test-org-factory/1.0.0
+production_org: declarative-migrations
+test_org: declarative-migrations-test
+repository: failure-injection-atomicity
+kind: chaos
+readiness: ready
+objectives:
+- Verify faults before/during/after DDL, compensation, known-state guarantees, and resumability across the supported
+  happy-path states and canonical fixtures.
+- Verify faults before/during/after DDL, compensation, known-state guarantees, and resumability under retries, interruption,
+  concurrency, offline operation, or partial failure.
+- Verify faults before/during/after DDL, compensation, known-state guarantees, and resumability preserves authorization,
+  idempotency, integrity, observability, and actionable failure classification.
+always_on_checks:
+- Validate test-plan and dependency metadata.
+- Validate generated fixture and workflow syntax.
+- Classify missing upstreams or credentials separately from product regressions.
+schedule_utc: 17 5 * * *
+expensive: true
+required_infrastructure:
+- PostgreSQL
+- CockroachDB
+- fault injector
+cases:
+- id: TC-001
+  title: Verify faults before/during/after DDL, compensation, known-state guarantees, and resumability across the supported
+    happy-path states and canonical fixtures.
+  tier: scheduled-live
+  status: planned
+  evidence:
+  - junit
+  - readiness JSON
+  - workflow artifacts
+- id: TC-002
+  title: Verify faults before/during/after DDL, compensation, known-state guarantees, and resumability under retries,
+    interruption, concurrency, offline operation, or partial failure.
+  tier: scheduled-live
+  status: planned
+  evidence:
+  - junit
+  - readiness JSON
+  - workflow artifacts
+- id: TC-003
+  title: Verify faults before/during/after DDL, compensation, known-state guarantees, and resumability preserves authorization,
+    idempotency, integrity, observability, and actionable failure classification.
+  tier: scheduled-live
+  status: planned
+  evidence:
+  - junit
+  - readiness JSON
+  - workflow artifacts

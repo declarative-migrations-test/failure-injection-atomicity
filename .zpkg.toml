@@ -1,0 +1,16 @@
+[package]
+org = "declarative-migrations-test"
+name = "failure-injection-atomicity"
+version = "0.1.0"
+description = "Independent chaos acceptance harness"
+license = "MIT"
+
+[package.repository]
+vcs = "git"
+url = "https://github.com/declarative-migrations-test/failure-injection-atomicity"
+
+[install]
+dir = ".vendor/.zed"
+
+[publish]
+exclude = ["artifacts/**", "vendor/**", ".vendor/**", ".env", ".env.*"]
