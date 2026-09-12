@@ -48,7 +48,11 @@ jobs:
       - name: Build pinned dpm
         id: dpm
         shell: bash
-        run: echo "path=$(scripts/build-dpm.sh)" >> "$GITHUB_OUTPUT"
+        run: |
+          set -euo pipefail
+          dpm_path="$(scripts/build-dpm.sh)"
+          test -x "$dpm_path"
+          printf 'path=%s\n' "$dpm_path" >> "$GITHUB_OUTPUT"
       - name: Start CockroachDB 25.2.4
         run: >-
           docker run --detach --name dm-cockroach
