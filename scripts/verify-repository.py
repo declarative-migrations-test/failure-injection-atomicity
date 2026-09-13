@@ -8,7 +8,7 @@ root = Path(__file__).resolve().parents[1]
 manifest = json.loads((root / "bootstrap-manifest.json").read_text())
 dependency = json.loads((root / "production-dependency.json").read_text())
 source = json.loads((root / "canonical-quote-source.json").read_text())
-expected_dpm = "341dad272543eb1cce6d148106f53a1672ff15bb"
+expected_dpm = "7396f79826dc6b720771a3c6ad1905b991c7cd59"
 canonical_consumer_dpm = "d05a7880987ddaa271fa88b52c787390ef12b899"
 
 required = [
@@ -81,7 +81,7 @@ if source["namespacePath"] != "db/namespace.json":
 if source["dpmRepository"] != production["repository"]:
     raise SystemExit("Canonical DPM repository drifted")
 # The Canonical quote source intentionally records the older migration-tool
-# revision it was reviewed with.  This suite runs that unchanged consumer
+# revision it was reviewed with. This suite runs that unchanged consumer
 # contract through the current DPM candidate to prove release compatibility.
 if source["dpmCommit"] != canonical_consumer_dpm:
     raise SystemExit("Canonical consumer DPM revision drifted")
