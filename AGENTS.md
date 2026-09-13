@@ -1,7 +1,10 @@
 # AGENTS.md
 
 Repository: `declarative-migrations-test/failure-injection-atomicity`
-Production dependency: `declarative-migrations/declarative-postgres-migrate.rs@341dad272543eb1cce6d148106f53a1672ff15bb`
+Current production candidate: `declarative-migrations/declarative-postgres-migrate.rs@7396f79826dc6b720771a3c6ad1905b991c7cd59`
+Historical Canonical quote consumer revision: `declarative-migrations/declarative-postgres-migrate.rs@d05a7880987ddaa271fa88b52c787390ef12b899`
+
+The historical consumer revision is immutable compatibility evidence; it does not replace the current production candidate. Keep these identities separate in manifests, verification, logs, and recovery evidence.
 
 Use focused pull requests. Keep database tests deterministic and self-cleaning. Never weaken a failing convergence, rollback, drift, locking, atomicity, CLI, or MCP assertion merely to make CI green. Never commit credentials or production data. Resolve conflicts semantically with both sides and relevant history.
 
