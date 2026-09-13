@@ -1,13 +1,17 @@
 [build-system]
-requires=["setuptools>=68"]
+requires=["setuptools>=84.0.0"]
 build-backend="setuptools.build_meta"
 [project]
 name="failure-injection-atomicity-harness"
 version="0.1.0"
 requires-python=">=3.11"
-dependencies=["PyYAML>=6,<7"]
+dependencies=["PyYAML>=6.0.3,<7"]
 [project.optional-dependencies]
-test=["pytest>=8,<10"]
+test=["pytest>=9.1.1,<10"]
+[tool.setuptools]
+# This repository runs scripts in place; only dependency metadata is installed.
+# Never discover vendor checkouts, fixtures, evidence, or temporary directories.
+packages=[]
 [tool.pytest.ini_options]
 addopts="-ra"
 testpaths=["tests"]
