@@ -1,0 +1,9 @@
+LICENSE
+README.md
+pyproject.toml
+failure_injection_atomicity_harness.egg-info/PKG-INFO
+failure_injection_atomicity_harness.egg-info/SOURCES.txt
+failure_injection_atomicity_harness.egg-info/dependency_links.txt
+failure_injection_atomicity_harness.egg-info/requires.txt
+failure_injection_atomicity_harness.egg-info/top_level.txt
+tests/test_generated_contract.py
