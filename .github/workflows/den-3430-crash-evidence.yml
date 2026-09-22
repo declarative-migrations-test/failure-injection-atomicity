@@ -5,14 +5,14 @@ on:
     paths:
       - 'evidence/crash-evidence.schema.json'
       - 'evidence/crash-matrix.json'
-      - 'scripts/test-crash-evidence-contract.py'
+      - 'tools/crash-evidence-validator/**'
       - '.github/workflows/den-3430-crash-evidence.yml'
   push:
     branches: [main]
     paths:
       - 'evidence/crash-evidence.schema.json'
       - 'evidence/crash-matrix.json'
-      - 'scripts/test-crash-evidence-contract.py'
+      - 'tools/crash-evidence-validator/**'
       - '.github/workflows/den-3430-crash-evidence.yml'
 
 permissions:
@@ -25,11 +25,19 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Check out exact candidate
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.90.0 --profile minimal --component rustfmt,clippy
+      - name: Check Rust formatting
+        run: cargo +1.90.0 fmt --manifest-path tools/crash-evidence-validator/Cargo.toml -- --check
+      - name: Run golden and mutation tests
+        run: cargo +1.90.0 test --manifest-path tools/crash-evidence-validator/Cargo.toml
+      - name: Run strict Clippy
+        run: cargo +1.90.0 clippy --manifest-path tools/crash-evidence-validator/Cargo.toml --all-targets -- -D warnings
       - name: Validate fixture-scoped crash evidence
-        run: python3 scripts/test-crash-evidence-contract.py
+        run: cargo +1.90.0 run --quiet --manifest-path tools/crash-evidence-validator/Cargo.toml
