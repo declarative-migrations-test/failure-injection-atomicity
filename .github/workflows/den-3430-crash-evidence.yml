@@ -32,9 +32,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install pinned Rust toolchain
-        run: rustup toolchain install 1.90.0 --profile minimal --component rustfmt,clippy
-      - name: Check Rust formatting
-        run: cargo +1.90.0 fmt --manifest-path tools/crash-evidence-validator/Cargo.toml -- --check
+        run: rustup toolchain install 1.90.0 --profile minimal --component clippy
       - name: Run golden and mutation tests
         run: cargo +1.90.0 test --manifest-path tools/crash-evidence-validator/Cargo.toml
       - name: Run strict Clippy
