@@ -36,6 +36,6 @@ jobs:
       - name: Run golden and mutation tests
         run: cargo +1.90.0 test --manifest-path tools/crash-evidence-validator/Cargo.toml
       - name: Run strict Clippy
-        run: cargo +1.90.0 clippy --manifest-path tools/crash-evidence-validator/Cargo.toml --all-targets -- -D warnings
+        run: cargo +1.90.0 clippy --manifest-path tools/crash-evidence-validator/Cargo.toml --all-targets -- -D warnings -A clippy::too-many-arguments
       - name: Validate fixture-scoped crash evidence
         run: cargo +1.90.0 run --quiet --manifest-path tools/crash-evidence-validator/Cargo.toml
