@@ -5,14 +5,14 @@ on:
     paths:
       - 'evidence/crash-evidence.schema.json'
       - 'evidence/crash-matrix.json'
-      - 'scripts/test-crash-evidence-contract.py'
+      - 'tools/crash-evidence-validator/**'
       - '.github/workflows/den-3430-crash-evidence.yml'
   push:
     branches: [main]
     paths:
       - 'evidence/crash-evidence.schema.json'
       - 'evidence/crash-matrix.json'
-      - 'scripts/test-crash-evidence-contract.py'
+      - 'tools/crash-evidence-validator/**'
       - '.github/workflows/den-3430-crash-evidence.yml'
 
 permissions:
@@ -24,12 +24,26 @@ concurrency:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - name: Check out exact candidate
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+          show-progress: false
+      - name: Assert exact reviewed head
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.90.0 --profile minimal --component rustfmt,clippy
+      - name: Check Rust formatting
+        run: cargo +1.90.0 fmt --manifest-path tools/crash-evidence-validator/Cargo.toml -- --check
+      - name: Run golden and mutation tests
+        run: cargo +1.90.0 test --manifest-path tools/crash-evidence-validator/Cargo.toml
+      - name: Run strict Clippy
+        run: cargo +1.90.0 clippy --manifest-path tools/crash-evidence-validator/Cargo.toml --all-targets -- -D warnings -A clippy::too-many-arguments
       - name: Validate fixture-scoped crash evidence
-        run: python3 scripts/test-crash-evidence-contract.py
+        run: cargo +1.90.0 run --quiet --manifest-path tools/crash-evidence-validator/Cargo.toml
