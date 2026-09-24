@@ -99,9 +99,7 @@ fn is_fixture_identity(value: &str) -> bool {
     };
     (3..=128).contains(&rest.len())
         && rest.bytes().enumerate().all(|(i, b)| {
-            b.is_ascii_lowercase()
-                || b.is_ascii_digit()
-                || (i > 0 && matches!(b, b':' | b'-'))
+            b.is_ascii_lowercase() || b.is_ascii_digit() || (i > 0 && matches!(b, b':' | b'-'))
         })
         && rest
             .as_bytes()
@@ -162,7 +160,10 @@ fn validate(schema: &Value, matrix: &Value) -> Result<usize> {
     )? {
         return Err("crash evidence root must reject unknown fields".into());
     }
-    let properties = object(required(schema, "properties", "schema")?, "schema.properties")?;
+    let properties = object(
+        required(schema, "properties", "schema")?,
+        "schema.properties",
+    )?;
     let schema_version = object(
         required(properties, "schemaVersion", "schema.properties")?,
         "schema.properties.schemaVersion",
@@ -299,7 +300,9 @@ fn validate(schema: &Value, matrix: &Value) -> Result<usize> {
             &format!("{context}.source.testSourceSha"),
         )?;
         if !is_lower_hex(source_sha, 40) {
-            return Err(format!("{context} test source revision is not an exact commit SHA"));
+            return Err(format!(
+                "{context} test source revision is not an exact commit SHA"
+            ));
         }
 
         let observation = object(
@@ -426,7 +429,9 @@ fn validate(schema: &Value, matrix: &Value) -> Result<usize> {
             .difference(&observed_fault_points)
             .cloned()
             .collect::<Vec<_>>();
-        return Err(format!("crash matrix coverage drifted: missing={missing:?}"));
+        return Err(format!(
+            "crash matrix coverage drifted: missing={missing:?}"
+        ));
     }
 
     let mut forbidden = BTreeSet::new();
@@ -557,25 +562,33 @@ mod tests {
             .as_object_mut()
             .unwrap()
             .insert("extra".into(), Value::Bool(true));
-        assert!(validate(&schema, &matrix).unwrap_err().contains("keys drifted"));
+        assert!(
+            validate(&schema, &matrix)
+                .unwrap_err()
+                .contains("keys drifted")
+        );
     }
 
     #[test]
     fn rejects_non_ephemeral_fixture() {
         let (schema, mut matrix) = fixture();
         matrix["cases"][0]["fixture"]["ephemeral"] = Value::Bool(false);
-        assert!(validate(&schema, &matrix)
-            .unwrap_err()
-            .contains("ephemeral synthetic fixture"));
+        assert!(
+            validate(&schema, &matrix)
+                .unwrap_err()
+                .contains("ephemeral synthetic fixture")
+        );
     }
 
     #[test]
     fn rejects_wrong_fault_state() {
         let (schema, mut matrix) = fixture();
         matrix["cases"][1]["observation"]["schemaState"] = Value::String("applied".into());
-        assert!(validate(&schema, &matrix)
-            .unwrap_err()
-            .contains("state is inconsistent"));
+        assert!(
+            validate(&schema, &matrix)
+                .unwrap_err()
+                .contains("state is inconsistent")
+        );
     }
 
     #[test]
@@ -583,9 +596,11 @@ mod tests {
         let (schema, mut matrix) = fixture();
         let scenario = matrix["cases"][0]["scenarioId"].clone();
         matrix["cases"][1]["scenarioId"] = scenario;
-        assert!(validate(&schema, &matrix)
-            .unwrap_err()
-            .contains("duplicate scenarioId"));
+        assert!(
+            validate(&schema, &matrix)
+                .unwrap_err()
+                .contains("duplicate scenarioId")
+        );
     }
 
     #[test]
@@ -596,7 +611,9 @@ mod tests {
             .unwrap()
             .insert("secret".into(), Value::String("redacted".into()));
         let error = validate(&schema, &matrix).unwrap_err();
-        assert!(error.contains("keys drifted") || error.contains("credential or production-bearing"));
+        assert!(
+            error.contains("keys drifted") || error.contains("credential or production-bearing")
+        );
     }
 
     #[test]
